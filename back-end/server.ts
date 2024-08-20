@@ -3,6 +3,10 @@ import cors from "@fastify/cors";
 import { login } from './src/routes/login';
 import { createUser } from './src/routes/signup';
 import { createPeople } from './src/routes/create-people';
+import { removePeople } from './src/routes/remove-people';
+import { updatePeople } from './src/routes/update-people';
+
+import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
 
 export function createServer() {
@@ -12,10 +16,14 @@ export function createServer() {
     origin: '*',
   });
 
-  server.register(login)
-  server.register(createUser)
-  server.register(createPeople)
+  server.setValidatorCompiler(validatorCompiler);
+  server.setSerializerCompiler(serializerCompiler);
 
+  server.register(createUser)
+  server.register(login)
+  server.register(createPeople)
+  server.register(updatePeople)
+  server.register(removePeople)
   return server
 }
 
