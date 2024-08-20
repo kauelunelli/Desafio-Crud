@@ -27,13 +27,13 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/routes/login.ts
-var login_exports = {};
-__export(login_exports, {
-  login: () => login
+// src/routes/create-people.ts
+var create_people_exports = {};
+__export(create_people_exports, {
+  createPeople: () => createPeople
 });
-module.exports = __toCommonJS(login_exports);
-var jwt = __toESM(require("jsonwebtoken"));
+module.exports = __toCommonJS(create_people_exports);
+var import_zod2 = require("zod");
 
 // src/lib/prisma.ts
 var import_client = require("@prisma/client");
@@ -41,15 +41,12 @@ var prisma = new import_client.PrismaClient({
   log: ["query"]
 });
 
-// src/routes/login.ts
-var import_bcrypt = require("bcrypt");
-
 // src/errors/client-error.ts
 var ClientError = class extends Error {
 };
 
-// src/routes/login.ts
-var import_zod2 = require("zod");
+// src/middleware/authenticate.ts
+var jwt = __toESM(require("jsonwebtoken"));
 
 // src/env.ts
 var import_zod = require("zod");
@@ -59,33 +56,66 @@ var envSchema = import_zod.z.object({
 });
 var env = envSchema.parse(process.env);
 
-// src/routes/login.ts
-async function login(app) {
+// src/middleware/authenticate.ts
+async function authenticate(request, reply) {
+  try {
+    const token = request.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return reply.status(401).send({ error: "Token not provided" });
+    }
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    request.userId = decoded.userId;
+  } catch (error) {
+    return reply.status(403).send({ error: "Invalid or expired token" });
+  }
+}
+
+// src/routes/create-people.ts
+async function createPeople(app) {
   app.withTypeProvider().post(
-    "/login",
+    "/create-people",
     {
+      preHandler: [authenticate],
       schema: {
         body: import_zod2.z.object({
-          email: import_zod2.z.string().email(),
-          senha: import_zod2.z.string().min(6)
+          cpf: import_zod2.z.string().length(11),
+          nome: import_zod2.z.string(),
+          rg: import_zod2.z.string(),
+          cep: import_zod2.z.string(),
+          endereco: import_zod2.z.string(),
+          numero: import_zod2.z.string(),
+          bairro: import_zod2.z.string(),
+          complemento: import_zod2.z.string(),
+          municipio: import_zod2.z.string(),
+          uf: import_zod2.z.string()
         })
       }
     },
     async (request) => {
-      const { email, senha } = request.body;
-      const user = await prisma.usuario.findFirst({ where: { email } });
-      if (!user) {
-        throw new ClientError("Usuario n\xE3o encontrado");
+      const { cpf, nome, rg, cep, endereco, numero, bairro, complemento, municipio, uf } = request.body;
+      const userAlreadyExists = await prisma.pessoa.findFirst({ where: { cpf } });
+      if (userAlreadyExists) {
+        throw new ClientError("Usuario j\xE1 existe");
       }
-      if (!(0, import_bcrypt.compareSync)(senha, user.senha)) {
-        throw new ClientError("Senha inv\xE1lida");
-      }
-      const token = jwt.sign({ userId: user.id }, env.JWT_SECRET);
-      return { user, token };
+      const people = await prisma.pessoa.create({
+        data: {
+          cpf,
+          nome,
+          rg,
+          cep,
+          endereco,
+          numero,
+          bairro,
+          complemento,
+          municipio,
+          uf
+        }
+      });
+      return { pessoa: people };
     }
   );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  login
+  createPeople
 });

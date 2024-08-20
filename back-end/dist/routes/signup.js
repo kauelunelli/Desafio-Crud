@@ -27,13 +27,12 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 ));
 var __toCommonJS = (mod) => __copyProps(__defProp({}, "__esModule", { value: true }), mod);
 
-// src/routes/login.ts
-var login_exports = {};
-__export(login_exports, {
-  login: () => login
+// src/routes/signup.ts
+var signup_exports = {};
+__export(signup_exports, {
+  createUser: () => createUser
 });
-module.exports = __toCommonJS(login_exports);
-var jwt = __toESM(require("jsonwebtoken"));
+module.exports = __toCommonJS(signup_exports);
 
 // src/lib/prisma.ts
 var import_client = require("@prisma/client");
@@ -41,15 +40,15 @@ var prisma = new import_client.PrismaClient({
   log: ["query"]
 });
 
-// src/routes/login.ts
+// src/routes/signup.ts
 var import_bcrypt = require("bcrypt");
 
 // src/errors/client-error.ts
 var ClientError = class extends Error {
 };
 
-// src/routes/login.ts
-var import_zod2 = require("zod");
+// src/routes/signup.ts
+var jwt = __toESM(require("jsonwebtoken"));
 
 // src/env.ts
 var import_zod = require("zod");
@@ -59,10 +58,11 @@ var envSchema = import_zod.z.object({
 });
 var env = envSchema.parse(process.env);
 
-// src/routes/login.ts
-async function login(app) {
+// src/routes/signup.ts
+var import_zod2 = require("zod");
+async function createUser(app) {
   app.withTypeProvider().post(
-    "/login",
+    "/singup",
     {
       schema: {
         body: import_zod2.z.object({
@@ -73,19 +73,21 @@ async function login(app) {
     },
     async (request) => {
       const { email, senha } = request.body;
-      const user = await prisma.usuario.findFirst({ where: { email } });
-      if (!user) {
-        throw new ClientError("Usuario n\xE3o encontrado");
+      const usuario = await prisma.usuario.findFirst({ where: { email } });
+      if (usuario) {
+        throw new ClientError("Email j\xE1 cadastrado");
       }
-      if (!(0, import_bcrypt.compareSync)(senha, user.senha)) {
-        throw new ClientError("Senha inv\xE1lida");
-      }
-      const token = jwt.sign({ userId: user.id }, env.JWT_SECRET);
-      return { user, token };
+      const newUser = await prisma.usuario.create({
+        data: {
+          email,
+          senha: (0, import_bcrypt.hashSync)(senha, 10)
+        }
+      });
+      return { user: newUser, token: jwt.sign({ userId: newUser.id }, env.JWT_SECRET) };
     }
   );
 }
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  login
+  createUser
 });
