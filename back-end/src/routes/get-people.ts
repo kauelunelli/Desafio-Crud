@@ -14,20 +14,26 @@ export async function getPeople(app: FastifyInstance) {
         querystring: z.object({
           nome: z.string().optional(),
           cpf: z.string().optional(),
+          limit: z.number().min(1).max(100).default(50).optional(),
+          offset: z.number().min(0).default(0).optional(),
         }),
       }
     },
 
     async (request) => {
-      const { nome, cpf } = request.query;
+      const { nome, cpf, limit = 50, offset = 0 } = request.query;
 
       let people;
       if (nome) {
-        people = await prisma.pessoa.findMany({ where: { nome: nome } });
+        people = await prisma.pessoa.findMany({
+          where: { nome: nome },
+          take: limit,
+          skip: offset,
+        });
       } else if (cpf) {
-        people = await prisma.pessoa.findMany({ where: { cpf } });
+        people = await prisma.pessoa.findUnique({ where: { cpf } }); //So existe um usuario com o cpf
       } else {
-        people = await prisma.pessoa.findMany();
+        people = await prisma.pessoa.findMany({ take: limit, skip: offset });
       }
 
       return { people };
