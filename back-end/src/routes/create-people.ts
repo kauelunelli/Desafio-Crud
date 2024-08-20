@@ -5,12 +5,13 @@ import { prisma } from "../lib/prisma";;
 import { ClientError } from "../errors/client-error";
 import { env } from "../env";
 import { authenticate } from "../middleware/authenticate";
+import { validateCpf } from "../lib/validateCpf";
 
 export async function createPeople(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
     "/create-people",
     {
-      preHandler: [authenticate],
+      // preHandler: [authenticate],
       schema: {
         body: z.object({
           cpf: z.string().length(11),
@@ -35,6 +36,8 @@ export async function createPeople(app: FastifyInstance) {
         throw new ClientError("Usuario já existe");
       }
 
+      validateCpf(cpf);
+
       const people = await prisma.pessoa.create({
         data: {
           cpf,
@@ -55,4 +58,6 @@ export async function createPeople(app: FastifyInstance) {
       return { pessoa: people };
     }
   );
+
+
 }
