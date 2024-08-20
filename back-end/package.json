@@ -4,13 +4,14 @@
     "@prisma/client": "^5.18.0",
     "@types/bcrypt": "^5.0.2",
     "bcrypt": "^5.1.1",
+    "cpf-cnpj-validator": "^1.0.3",
     "dayjs": "^1.11.12",
     "fastify": "^4.28.1",
     "fastify-jwt": "^4.2.0",
     "fastify-type-provider-zod": "^2.0.0",
     "jsonwebtoken": "^9.0.2",
     "tsup": "^8.1.0",
-    "tsx": "^4.17.0",
+    "tsx": "4.16.2",
     "zod": "^3.23.8"
   },
   "name": "back-end",
@@ -24,7 +25,7 @@
     "typescript": "^5.5.4"
   },
   "scripts": {
-    "dev": "tsx -watch src/server.ts",
+    "dev": "tsx watch server.ts",
     "build": "tsup src",
     "start": "node dist/server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
