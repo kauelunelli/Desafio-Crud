@@ -1,7 +1,6 @@
 import { prisma } from '../lib/prisma';
 import { hashSync } from 'bcrypt';
 import { ClientError } from '../errors/client-error';
-import * as jwt from 'jsonwebtoken';
 import { env } from "../env";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
@@ -19,12 +18,12 @@ export async function createUser(app: FastifyInstance) {
         }),
       },
     },
-    async (request) => {
+    async (request, reply) => {
       const { name, email, password } = request.body;
 
-      const user = await prisma.user.findFirst({ where: { email } });
+      const user = await prisma.user.findFirst({ where: { name } });
       if (user) {
-        throw new ClientError("Email já cadastrado");
+        throw new ClientError("Usuario já cadastrado");
       }
 
       const newUser = await prisma.user.create({
@@ -36,7 +35,7 @@ export async function createUser(app: FastifyInstance) {
       });
 
 
-      return { user: newUser, token: jwt.sign({ userId: newUser.id }, env.JWT_SECRET) };
+      return { newUser };
     }
   );
 }
