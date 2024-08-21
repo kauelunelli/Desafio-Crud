@@ -13,16 +13,15 @@ export async function login(app: FastifyInstance) {
     {
       schema: {
         body: z.object({
-          user: z.string(),
-          email: z.string().email(),
+          name: z.string(),
           password: z.string().min(6),
         }),
       },
     },
     async (request) => {
-      const { email, password } = request.body;
+      const { name, password } = request.body;
 
-      const user = await prisma.user.findFirst({ where: { email } });
+      const user = await prisma.user.findFirst({ where: { name } });
       if (!user) {
         throw new ClientError("Usuario não encontrado");
       }
