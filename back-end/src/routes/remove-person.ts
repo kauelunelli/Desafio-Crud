@@ -7,9 +7,9 @@ import { ClientError } from "../errors/client-error";
 
 
 
-export async function removePeople(app: FastifyInstance) {
+export async function removePerson(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().delete(
-    "/remove-people/:id",
+    "/remove-person/:id",
     {
       preHandler: [authenticate],
       schema: {
@@ -23,13 +23,13 @@ export async function removePeople(app: FastifyInstance) {
 
       const { id } = request.params;
 
-      const people = await prisma.pessoa.findUnique({ where: { id } });
+      const person = await prisma.person.findUnique({ where: { id } });
 
-      if (!people) {
+      if (!person) {
         throw new ClientError("Pessoa não encontrada");
       }
 
-      await prisma.pessoa.delete({ where: { id } });
+      await prisma.person.delete({ where: { id } });
 
       return { message: "Pessoa removida com sucesso" };
     }
