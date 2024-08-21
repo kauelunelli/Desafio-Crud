@@ -1,11 +1,22 @@
-import { Input } from "../components/input";
-import { login } from "../services/UserService";
-import { Lock, User } from "lucide-react";
 import { useState } from "react";
+import { Input } from "../components/input";
+import { Lock, Mail, User } from "lucide-react";
+import { signup } from "../services/UserService";
+import { Button } from "../components/button";
 
-export function LoginPage() {
+export function SignupPage() {
   const [user, setUser] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSignup = async () => {
+    setIsLoading(true);
+    if (!user || !email || !password) {
+      alert("Preencha todos os campos");
+    }
+    await signup(user, email, password);
+  };
 
   const inputs = [
     {
@@ -19,6 +30,16 @@ export function LoginPage() {
       },
     },
     {
+      label: "Email",
+      type: "email",
+      placeholder: "Digite seu email",
+      value: email,
+      icon: Mail,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) => {
+        setEmail(e.target.value);
+      },
+    },
+    {
       label: "Senha",
       type: "password",
       placeholder: "Digite sua senha",
@@ -29,7 +50,6 @@ export function LoginPage() {
       },
     },
   ];
-
   return (
     <section className="bg-white dark:bg-gray-900">
       <div className="lg:grid lg:min-h-screen lg:grid-cols-12">
@@ -64,7 +84,7 @@ export function LoginPage() {
             </h1>
 
             <p className="mt-4 leading-relaxed text-gray-500 dark:text-gray-400">
-              Efetue o login para acessar os Serviços da Officer Soft.
+              Cadastre um novo usuário para acessar o portal de serviços.
             </p>
 
             <div className="mt-8 grid  grid-cols-6 gap-4">
@@ -75,12 +95,13 @@ export function LoginPage() {
               ))}
 
               <div className="col-span-6 mt-6 sm:flex sm:items-center sm:gap-4">
-                <button
-                  onClick={() => login(user, password)}
-                  className="inline-block shrink-0 w-full rounded-md border border-blue-600 bg-blue-600 px-12 py-4 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500 dark:hover:bg-blue-700 dark:hover:text-white"
+                <Button
+                  isDisabled={isLoading}
+                  isLoading={isLoading}
+                  onClick={() => handleSignup()}
                 >
-                  Acessar conta
-                </button>
+                  Criar conta
+                </Button>
               </div>
             </div>
           </div>
