@@ -13,23 +13,25 @@ export async function createUser(app: FastifyInstance) {
     {
       schema: {
         body: z.object({
+          name: z.string(),
           email: z.string().email(),
-          senha: z.string().min(6),
+          password: z.string().min(6),
         }),
       },
     },
     async (request) => {
-      const { email, senha } = request.body;
+      const { name, email, password } = request.body;
 
-      const usuario = await prisma.usuario.findFirst({ where: { email } });
-      if (usuario) {
+      const user = await prisma.user.findFirst({ where: { email } });
+      if (user) {
         throw new ClientError("Email já cadastrado");
       }
 
-      const newUser = await prisma.usuario.create({
+      const newUser = await prisma.user.create({
         data: {
+          name,
           email,
-          senha: hashSync(senha, 10)
+          password: hashSync(password, 10)
         }
       });
 

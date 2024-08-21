@@ -2,9 +2,9 @@ import fastify from 'fastify'
 import cors from "@fastify/cors";
 import { login } from './src/routes/login';
 import { createUser } from './src/routes/signup';
-import { createPeople } from './src/routes/create-people';
-import { removePeople } from './src/routes/remove-people';
-import { updatePeople } from './src/routes/update-people';
+import { createPerson } from './src/routes/create-person';
+import { removePerson } from './src/routes/remove-person';
+import { updatedPerson } from './src/routes/update-person';
 
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 
@@ -21,9 +21,9 @@ export function createServer() {
 
   server.register(createUser)
   server.register(login)
-  server.register(createPeople)
-  server.register(updatePeople)
-  server.register(removePeople)
+  server.register(createPerson)
+  server.register(updatedPerson)
+  server.register(removePerson)
   return server
 }
 
