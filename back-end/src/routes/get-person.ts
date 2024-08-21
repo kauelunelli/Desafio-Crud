@@ -5,14 +5,14 @@ import { authenticate } from "../middleware/authenticate";
 import { prisma } from "../lib/prisma";
 
 
-export async function getPeople(app: FastifyInstance) {
+export async function getPerson(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().get(
-    "/get-people",
+    "/get-person",
     {
       preHandler: [authenticate],
       schema: {
         querystring: z.object({
-          nome: z.string().optional(),
+          name: z.string().optional(),
           cpf: z.string().optional(),
           limit: z.number().min(1).max(100).default(50).optional(),
           offset: z.number().min(0).default(0).optional(),
@@ -21,22 +21,22 @@ export async function getPeople(app: FastifyInstance) {
     },
 
     async (request) => {
-      const { nome, cpf, limit = 50, offset = 0 } = request.query;
+      const { name, cpf, limit = 50, offset = 0 } = request.query;
 
-      let people;
-      if (nome) {
-        people = await prisma.pessoa.findMany({
-          where: { nome: nome },
+      let person;
+      if (name) {
+        person = await prisma.person.findMany({
+          where: { name: name },
           take: limit,
           skip: offset,
         });
       } else if (cpf) {
-        people = await prisma.pessoa.findUnique({ where: { cpf } }); //So existe um usuario com o cpf
+        person = await prisma.person.findUnique({ where: { cpf } }); //So existe um usuario com o cpf
       } else {
-        people = await prisma.pessoa.findMany({ take: limit, skip: offset });
+        person = await prisma.person.findMany({ take: limit, skip: offset });
       }
 
-      return { people };
+      return { person };
     }
   )
 }
