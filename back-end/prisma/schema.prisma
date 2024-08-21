@@ -10,28 +10,29 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model Usuario {
-  id    String @id @default(uuid())
-  email String
-  senha String
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String
+  password String
 
-  @@map("Usuarios")
+  @@map("Users")
 }
 
-model Pessoa {
-  id          String   @id @default(uuid())
-  cpf         String   @unique
-  nome        String
-  rg          String? //Pense que rg não é mais obrigatorio
-  cep         String
-  endereco    String
-  numero      String
-  bairro      String
-  complemento String?
-  municipio   String
-  uf          String
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
+model Person {
+  id           String   @id @default(uuid())
+  cpf          String   @unique
+  name         String
+  rg           String? // Consider rg as optional now
+  zipCode      String
+  address      String
+  number       String
+  neighborhood String
+  complement   String?
+  city         String
+  state        String
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
 
-  @@map("pessoas")
+  @@map("persons")
 }
