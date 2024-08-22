@@ -4,13 +4,15 @@ import { Input } from "../components/input";
 import { Modal } from "../components/modal";
 import { IPerson } from "../interface/IPerson";
 import { applyMask } from "../lib/mask";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { validateCPF } from "../lib/validateCPF";
 
-export function CreatePeoplePage({
+export function CreatePersonModal({
   closeModalCreate,
 }: {
   closeModalCreate: () => void;
 }) {
+  const [isLoading, setIsLoading] = useState(false);
   const [person, setPerson] = useState<IPerson>({
     cpf: "",
     name: "",
@@ -23,6 +25,26 @@ export function CreatePeoplePage({
     city: "",
     state: "",
   });
+
+  const handleCreatePerson = async (person: IPerson) => {
+    setIsLoading(true);
+    if (!person.cpf || !person.name || !person.zipCode || !person.address) {
+      alert("Preencha todos os campos obrigatórios");
+      setIsLoading(false);
+      return;
+    }
+    if (!validateCPF(person.cpf)) {
+      alert("CPF inválido");
+      setIsLoading(false);
+      return;
+    }
+    try {
+      await createPerson(person);
+      window.location.reload();
+    } catch (error) {
+      alert(error);
+    }
+  };
 
   const inputs = [
     {
@@ -71,24 +93,10 @@ export function CreatePeoplePage({
     },
     {
       type: "text",
-      placeholder: "Estado",
-      value: person.state,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-        setPerson({ ...person, state: e.target.value }),
-    },
-    {
-      type: "text",
       placeholder: "Bairro",
       value: person.neighborhood,
       onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
         setPerson({ ...person, neighborhood: e.target.value }),
-    },
-    {
-      type: "text",
-      placeholder: "Complemento",
-      value: person.complement,
-      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
-        setPerson({ ...person, complement: e.target.value }),
     },
     {
       type: "text",
@@ -97,7 +105,49 @@ export function CreatePeoplePage({
       onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
         setPerson({ ...person, city: e.target.value }),
     },
+    {
+      type: "text",
+      placeholder: "Estado",
+      value: person.state,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+        setPerson({ ...person, state: e.target.value }),
+    },
+    {
+      type: "text",
+      placeholder: "Complemento",
+      value: person.complement,
+      onChange: (e: React.ChangeEvent<HTMLInputElement>) =>
+        setPerson({ ...person, complement: e.target.value }),
+    },
   ];
+
+  useEffect(() => {
+    const handleFetchAddress = async (zipCode: string) => {
+      try {
+        const response = await fetch(
+          `https://viacep.com.br/ws/${zipCode}/json/`
+        );
+        const data = await response.json();
+        console.log(data);
+        setPerson((prevPerson) => ({
+          ...prevPerson,
+          address: data.logradouro,
+          neighborhood: data.bairro,
+          city: data.localidade,
+          state: data.uf,
+        }));
+        if (data.erro) {
+          alert("CEP não encontrado");
+        }
+      } catch (error) {
+        console.error("Um erro inesperado ao trazer os dados", error);
+      }
+    };
+
+    if (person.zipCode.length === 9) {
+      handleFetchAddress(person.zipCode);
+    }
+  }, [person.zipCode, setPerson]);
 
   return (
     <>
@@ -107,14 +157,21 @@ export function CreatePeoplePage({
         isOpen={true}
         onClose={closeModalCreate}
       >
-        <form>
+        <div className="grid grid-cols-2 gap-6">
           {inputs.map((input, index) => (
-            <div key={index} className="mb-4">
+            <div key={index} className="">
               <Input {...input} />
             </div>
           ))}
-        </form>
-        <Button onClick={() => createPerson(person)}>Salvar</Button>
+        </div>
+
+        <Button
+          isDisabled={isLoading}
+          isLoading={isLoading}
+          onClick={() => handleCreatePerson(person)}
+        >
+          Salvar
+        </Button>
       </Modal>
     </>
   );
