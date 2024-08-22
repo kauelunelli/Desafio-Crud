@@ -22,16 +22,17 @@ export async function getPerson(app: FastifyInstance) {
 
     async (request) => {
       const { name, cpf, limit = 50, offset = 0 } = request.query;
-
       let person;
       if (name) {
         person = await prisma.person.findMany({
-          where: { name: name },
+          where: { name: { contains: name } },
           take: limit,
           skip: offset,
         });
       } else if (cpf) {
-        person = await prisma.person.findUnique({ where: { cpf } }); //So existe um usuario com o cpf
+        console.log(cpf)
+        person = await prisma.person.findMany({ where: { cpf: { contains: cpf } } });
+        console.log(person)
       } else {
         person = await prisma.person.findMany({ take: limit, skip: offset });
       }
