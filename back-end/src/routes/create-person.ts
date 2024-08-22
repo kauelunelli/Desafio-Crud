@@ -11,7 +11,7 @@ export async function createPerson(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
     "/create-person",
     {
-      preHandler: [authenticate],
+      // preHandler: [authenticate],
       schema: {
         body: z.object({
           cpf: z.string().length(11),
