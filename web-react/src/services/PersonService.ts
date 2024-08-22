@@ -12,7 +12,7 @@ interface IGetPersons {
 
 export const getPersons = async (params?: IGetPersons) => {
   try {
-    const response = await api.get("/get-person", {
+    const response = await api.get("/get-persons", {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -30,6 +30,20 @@ export const getPersons = async (params?: IGetPersons) => {
   }
 };
 
+export const getPerson = async (id: string) => {
+  try {
+    const response = await api.get(`/get-person/${id}`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+
+    return response.data.person;
+  } catch (error) {
+    throw new Error("An error occurred" + error);
+  }
+}
+
 export const createPerson = async (person: IPerson) => {
   person.cpf = removeMask(person.cpf);
   try {
@@ -41,7 +55,7 @@ export const createPerson = async (person: IPerson) => {
 
     return response.data.person;
   } catch (error) {
-    throw new Error("An error occurred" + error);
+    throw new Error(error.response.data.message);
   }
 }
 
@@ -55,7 +69,7 @@ export const updatePerson = async (person: IPerson) => {
 
     return response.data.person;
   } catch (error) {
-    throw new Error("An error occurred" + error);
+    throw new Error(error.response.data.message);
   }
 }
 
