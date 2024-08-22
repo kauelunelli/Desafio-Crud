@@ -6,7 +6,7 @@ export interface IPerson {
   rg: string;
   zipCode: string;
   address: string;
-  number: number,
+  number: string,
   neighborhood: string,
   complement: string,
   city: string,
