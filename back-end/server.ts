@@ -2,6 +2,7 @@ import fastify from 'fastify'
 import cors from "@fastify/cors";
 import { login } from './src/routes/login';
 import { createUser } from './src/routes/signup';
+import { getPerson } from './src/routes/get-person';
 import { createPerson } from './src/routes/create-person';
 import { removePerson } from './src/routes/remove-person';
 import { updatedPerson } from './src/routes/update-person';
@@ -23,6 +24,7 @@ export function createServer() {
   server.register(login)
   server.register(createPerson)
   server.register(updatedPerson)
+  server.register(getPerson)
   server.register(removePerson)
   return server
 }
