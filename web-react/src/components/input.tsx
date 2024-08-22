@@ -5,6 +5,8 @@ interface IInput {
   type: string;
   placeholder?: string;
   value: string;
+  minLength?: number;
+  maxLength?: number;
   icon?: React.ComponentType;
 
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -15,6 +17,8 @@ export function Input({
   type,
   placeholder,
   value,
+  minLength,
+  maxLength,
   icon: Icon,
   onChange,
 }: IInput) {
@@ -27,6 +31,8 @@ export function Input({
         {Icon && <Icon />}
         <input
           type={type}
+          minLength={minLength}
+          maxLength={maxLength}
           onChange={onChange}
           className="border-gray-200 bg-white text-md text-gray-700 shadow-sm dark:border-gray-700 dark:bg-transparent dark:text-gray-200 outline-none flex-1"
           placeholder={placeholder}
