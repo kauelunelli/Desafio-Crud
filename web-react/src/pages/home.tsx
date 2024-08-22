@@ -5,7 +5,8 @@ import { Button } from "../components/button";
 import { Edit2, Plus, Search, Trash2 } from "lucide-react";
 import { Input } from "../components/input";
 import { applyMask, removeMask } from "../lib/mask";
-import { CreatePeoplePage } from "./createPeople";
+import { CreatePersonModal } from "./create-person-modal";
+import { UpdatePersonModal } from "./update-person-modal";
 
 interface ISearch {
   name: string;
@@ -18,6 +19,9 @@ export function HomePage() {
   const token = localStorage.getItem("token");
   // const [limit, setLimit] = useState(50);
   // const [offset, setOffset] = useState(0);
+  const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
+  const [selectedPersonId, setSelectedPersonId] = useState("");
+  const [isModalUpdateOpen, setIsModalUpdateOpen] = useState(false);
   const [search, setSearch] = useState<ISearch>({ name: "", cpf: "" });
 
   const inputs = [
@@ -46,6 +50,23 @@ export function HomePage() {
     }
   }, [token]);
 
+  const openModalCreate = () => {
+    setIsModalCreateOpen(true);
+  };
+
+  const closeModalCreate = () => {
+    setIsModalCreateOpen(false);
+  };
+
+  const openModalUpdate = (id: string) => {
+    setSelectedPersonId(id);
+    setIsModalUpdateOpen(true);
+  };
+
+  const closeModalUpdate = () => {
+    setIsModalUpdateOpen(false);
+  };
+
   const handleSearch = async () => {
     try {
       const response = await getPersons({
@@ -62,14 +83,22 @@ export function HomePage() {
 
   return (
     <>
-      {/* <CreatePeoplePage closeModalCreate={() => {}} /> */}
+      {isModalCreateOpen && (
+        <CreatePersonModal closeModalCreate={closeModalCreate} />
+      )}
+      {isModalUpdateOpen && (
+        <UpdatePersonModal
+          closeModalUpdate={closeModalUpdate}
+          personId={selectedPersonId}
+        />
+      )}
       <div
         className="h-lvh p-16 dark:bg-gray-900
     "
       >
         <div className="rounded-lg m-auto max-w-screen-2xl  ">
           <div className="grid justify-items-end items-end grid-cols-6 gap-10 my-5">
-            <Button>
+            <Button onClick={openModalCreate}>
               <Plus />
               Nova pessoa
             </Button>
@@ -108,8 +137,8 @@ export function HomePage() {
               </thead>
 
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                {persons.map((person) => (
-                  <tr>
+                {persons.map((person, index) => (
+                  <tr key={index}>
                     <>
                       <td className="whitespace-nowrap px-4 py-2 font-medium text-gray-900 dark:text-white">
                         {person.name}
@@ -124,7 +153,12 @@ export function HomePage() {
                         {applyMask(person.zipCode, "zipCode")}
                       </td>
                       <td className="px-4 grid grid-cols-2 py-2 text-gray-700 dark:text-gray-200">
-                        <Button size="small">
+                        <Button
+                          onClick={() =>
+                            person.id && openModalUpdate(person.id)
+                          }
+                          size="small"
+                        >
                           <Edit2 />
                         </Button>
                         <Button
