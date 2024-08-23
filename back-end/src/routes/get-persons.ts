@@ -14,30 +14,37 @@ export async function getPersons(app: FastifyInstance) {
         querystring: z.object({
           name: z.string().optional(),
           cpf: z.string().optional(),
-          limit: z.number().min(1).max(100).default(50).optional(),
-          offset: z.number().min(0).default(0).optional(),
+          limit: z.string().optional(),
+          offset: z.string().optional(),
         }),
       }
     },
 
+
     async (request) => {
-      const { name, cpf, limit = 50, offset = 0 } = request.query;
+      const { name, cpf, limit = "50", offset = "0" } = request.query;
+      const parsedLimit = parseInt(limit);
+      const parsedOffset = parseInt(offset);
       let person;
+      let count;
       if (name) {
         person = await prisma.person.findMany({
           where: { name: { contains: name } },
-          take: limit,
-          skip: offset,
+          take: parsedLimit,
+          skip: parsedOffset,
+        });
+        count = await prisma.person.count({
+          where: { name: { contains: name } },
         });
       } else if (cpf) {
-        console.log(cpf)
         person = await prisma.person.findMany({ where: { cpf: { contains: cpf } } });
-        console.log(person)
+        count = await prisma.person.count({ where: { cpf: { contains: cpf } } });
       } else {
-        person = await prisma.person.findMany({ take: limit, skip: offset });
+        person = await prisma.person.findMany({ take: parsedLimit, skip: parsedOffset });
+        count = await prisma.person.count();
       }
 
-      return { person };
+      return { person, count };
     }
   )
 }
