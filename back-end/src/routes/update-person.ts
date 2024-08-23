@@ -3,6 +3,7 @@ import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { prisma } from "../lib/prisma";
 import { ClientError } from "../errors/client-error";
+import { authenticate } from "../middleware/authenticate";
 
 
 
@@ -10,7 +11,7 @@ export async function updatedPerson(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().put(
     "/update-people/:id",
     {
-      // preHandler: [authenticate],
+      preHandler: [authenticate],
       schema: {
         params: z.object({
           id: z.string().uuid()
