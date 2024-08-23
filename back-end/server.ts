@@ -9,6 +9,7 @@ import { updatedPerson } from './src/routes/update-person';
 import { getPerson } from './src/routes/get-person';
 
 import { serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
+import authenticateRoute from './src/middleware/authenticate';
 
 
 export function createServer() {
@@ -20,6 +21,7 @@ export function createServer() {
 
   server.setValidatorCompiler(validatorCompiler);
   server.setSerializerCompiler(serializerCompiler);
+  server.register(authenticateRoute)
 
   server.register(createUser)
   server.register(login)
