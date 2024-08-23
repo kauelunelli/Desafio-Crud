@@ -9,7 +9,7 @@ import { authenticate } from "../middleware/authenticate";
 
 export async function updatedPerson(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().put(
-    "/update-people/:id",
+    "/update-person/:id",
     {
       preHandler: [authenticate],
       schema: {
@@ -39,6 +39,19 @@ export async function updatedPerson(app: FastifyInstance) {
 
       if (!person) {
         throw new ClientError("Person not found");
+      }
+
+      const existingPerson = await prisma.person.findFirst({
+        where: {
+          cpf: cpf,
+          NOT: {
+            id: id
+          }
+        }
+      });
+
+      if (existingPerson) {
+        throw new ClientError("CPF is already in use");
       }
 
       const updatedPerson = await prisma.person.update({
