@@ -24,9 +24,9 @@ export const getPersons = async (params?: IGetPersons) => {
       },
     });
 
-    return response.data.person;
+    return response.data;
   } catch (error) {
-    throw new Error("An error occurred" + error);
+    throw new Error(error.response.data.message);
   }
 };
 
@@ -40,12 +40,13 @@ export const getPerson = async (id: string) => {
 
     return response.data.person;
   } catch (error) {
-    throw new Error("An error occurred" + error);
+    throw new Error(error.response.data.message);
   }
 }
 
 export const createPerson = async (person: IPerson) => {
   person.cpf = removeMask(person.cpf);
+  person.zipCode = removeMask(person.zipCode);
   try {
     const response = await api.post("/create-person", person, {
       headers: {
@@ -60,8 +61,10 @@ export const createPerson = async (person: IPerson) => {
 }
 
 export const updatePerson = async (person: IPerson) => {
+  person.cpf = removeMask(person.cpf);
+  person.zipCode = removeMask(person.zipCode);
   try {
-    const response = await api.put("/update-person", person, {
+    const response = await api.put(`/update-person/${person.id}`, person, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem("token")}`,
       },
@@ -83,6 +86,6 @@ export const deletePerson = async (id: string) => {
 
     window.location.reload();
   } catch (error) {
-    throw new Error("An error occurred" + error);
+    throw new Error(error.response.data.message);
   }
 }
