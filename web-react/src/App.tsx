@@ -3,11 +3,13 @@ import {
   Navigate,
   RouterProvider,
 } from "react-router-dom";
+import { AlertProvider } from "./alert/AlertContext";
 import { LoginPage } from "./pages/login";
 import { HomePage } from "./pages/home";
 import { SignupPage } from "./pages/signup";
 import { ReactNode, useEffect, useState } from "react";
 import { isAuthenticated } from "./services/UserService";
+import { Alert } from "./alert/Alert";
 
 function RequireAuth({ children }: { children: ReactNode }) {
   const [auth, setAuth] = useState<boolean | null>(null);
@@ -52,5 +54,10 @@ const router = createBrowserRouter([
 ]);
 
 export function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <AlertProvider>
+      <Alert />
+      <RouterProvider router={router} />
+    </AlertProvider>
+  );
 }
