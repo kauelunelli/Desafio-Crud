@@ -5,11 +5,13 @@ import { env } from "../env";
 import { ZodTypeProvider } from "fastify-type-provider-zod";
 import { z } from "zod";
 import { FastifyInstance } from 'fastify';
+import { authenticate } from '../middleware/authenticate';
 
 export async function createUser(app: FastifyInstance) {
   app.withTypeProvider<ZodTypeProvider>().post(
     "/singup",
     {
+      preHandler: [authenticate],
       schema: {
         body: z.object({
           name: z.string(),
