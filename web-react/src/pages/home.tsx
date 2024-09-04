@@ -1,28 +1,28 @@
-import { getPersons, deletePerson } from "../services/PersonService";
-import { useEffect, useState } from "react";
-import { IPerson } from "../interface/IPerson";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "../components/button";
-import { Edit2, Plus, Search, Trash2 } from "lucide-react";
+import { Edit2, Loader2, Plus, Trash2 } from "lucide-react";
 import { Input } from "../components/input";
 import { applyMask, removeMask } from "../lib/mask";
 import { CreatePersonModal } from "./create-person-modal";
 import { UpdatePersonModal } from "./update-person-modal";
-
-interface ISearch {
-  name: string;
-  cpf: string;
-}
+import { logout, getPersons, deletePerson } from "../services";
+import { useAlert } from "../alert/AlertContext";
+import { debounce } from "lodash";
+import { ISearch, IPerson } from "../interface";
 
 export function HomePage() {
   const [persons, setPersons] = useState([] as IPerson[]);
 
   const token = localStorage.getItem("token");
-  // const [limit, setLimit] = useState(50);
-  // const [offset, setOffset] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+  const [totalItems, setTotalItems] = useState(20);
   const [isModalCreateOpen, setIsModalCreateOpen] = useState(false);
   const [selectedPersonId, setSelectedPersonId] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalUpdateOpen, setIsModalUpdateOpen] = useState(false);
   const [search, setSearch] = useState<ISearch>({ name: "", cpf: "" });
+  const { addAlert } = useAlert();
 
   const inputs = [
     {
@@ -42,14 +42,6 @@ export function HomePage() {
     },
   ];
 
-  useEffect(() => {
-    if (token) {
-      getPersons().then((response) => {
-        setPersons(response);
-      });
-    }
-  }, [token]);
-
   const openModalCreate = () => {
     setIsModalCreateOpen(true);
   };
@@ -67,18 +59,42 @@ export function HomePage() {
     setIsModalUpdateOpen(false);
   };
 
-  const handleSearch = async () => {
-    try {
-      const response = await getPersons({
-        name: search.name,
-        cpf: removeMask(search.cpf),
-        // limit,
-        // offset,
-      });
-      setPersons(response);
-    } catch (error) {
-      console.error("An error occurred during search", error);
-    }
+  const fetchPersons = useCallback(
+    async (searchParams: ISearch, page: number) => {
+      if (!token) return;
+      setIsLoading(true);
+      try {
+        const response = await getPersons({
+          name: searchParams.name,
+          cpf: removeMask(searchParams.cpf),
+          limit: itemsPerPage,
+          offset: (page - 1) * itemsPerPage,
+        });
+        setPersons(response.person);
+        setTotalItems(response.count);
+      } catch {
+        addAlert("Erro ao buscar pessoas", "error");
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [token, itemsPerPage, addAlert]
+  );
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const debouncedFetchPersons = useCallback(
+    debounce((newSearch: ISearch, page: number) => {
+      fetchPersons(newSearch, page);
+    }, 300),
+    [fetchPersons]
+  );
+
+  useEffect(() => {
+    debouncedFetchPersons(search, currentPage);
+  }, [search, currentPage, debouncedFetchPersons]);
+
+  const paginate = (pageNumber: number) => {
+    setCurrentPage(pageNumber);
   };
 
   return (
@@ -93,24 +109,21 @@ export function HomePage() {
         />
       )}
       <div
-        className="h-lvh p-16 dark:bg-gray-900
-    "
+        className="h-lvh p-16 dark:bg-gray-900 
+        "
       >
         <div className="rounded-lg m-auto max-w-screen-2xl  ">
+          <Button onClick={logout}>Sair</Button>
           <div className="grid justify-items-end items-end grid-cols-6 gap-10 my-5">
             <Button onClick={openModalCreate}>
               <Plus />
               Nova pessoa
             </Button>
             <div className="col-span-5">
-              <div className="grid grid-cols-3 gap-6 ">
+              <div className="grid grid-cols-4 gap-6 ">
                 {inputs.map((input, index) => (
                   <Input key={index} {...input} value={input.value} />
                 ))}
-                <Button onClick={handleSearch}>
-                  <Search />
-                  Buscar
-                </Button>
               </div>
             </div>
           </div>
@@ -174,84 +187,75 @@ export function HomePage() {
                 ))}
               </tbody>
             </table>
+            {isLoading && (
+              <Loader2 className="w-full h-24 animate-spin" size="50" />
+            )}
           </div>
-
-          <div className="rounded-b-lg border-t border-gray-200 px-4 py-2 dark:border-gray-700">
-            <ol className="flex justify-end gap-1 text-xs font-medium">
-              <li>
-                <a
-                  href="#"
-                  className="inline-flex size-8 items-center justify-center rounded border border-gray-100 bg-white text-gray-900 rtl:rotate-180 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                >
-                  <span className="sr-only">Prev Page</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="size-3"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+          {totalItems > itemsPerPage && (
+            <div className="rounded-b-lg border-t border-gray-200 px-4 py-2 dark:border-gray-700">
+              <ol className="flex justify-end gap-1 text-xs font-medium">
+                <li>
+                  <a
+                    href="#"
+                    className="inline-flex size-8 items-center justify-center rounded border border-gray-100 bg-white text-gray-900 rtl:rotate-180 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                    onClick={() => paginate(currentPage - 1)}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </a>
-              </li>
+                    <span className="sr-only">Prev Page</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="size-3"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </a>
+                </li>
 
-              <li>
-                <a
-                  href="#"
-                  className="block size-8 rounded border border-gray-100 bg-white text-center leading-8 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                >
-                  1
-                </a>
-              </li>
+                {Array.from({
+                  length: Math.ceil(totalItems / itemsPerPage),
+                }).map((_, index) => (
+                  <li key={index}>
+                    <a
+                      href="#"
+                      className={`inline-flex size-8 items-center justify-center rounded border border-gray-100 bg-white text-gray-900 rtl:rotate-180 dark:border-gray-800 dark:bg-gray-900 dark:text-white ${
+                        currentPage === index + 1 ? "bg-gray-200" : ""
+                      }`}
+                      onClick={() => paginate(index + 1)}
+                    >
+                      {index + 1}
+                    </a>
+                  </li>
+                ))}
 
-              <li className="block size-8 rounded border-blue-600 bg-blue-600 text-center leading-8 dark:text-white">
-                2
-              </li>
-
-              <li>
-                <a
-                  href="#"
-                  className="block size-8 rounded border border-gray-100 bg-white text-center leading-8 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                >
-                  3
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="#"
-                  className="block size-8 rounded border border-gray-100 bg-white text-center leading-8 text-gray-900 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                >
-                  4
-                </a>
-              </li>
-
-              <li>
-                <a
-                  href="#"
-                  className="inline-flex size-8 items-center justify-center rounded border border-gray-100 bg-white text-gray-900 rtl:rotate-180 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
-                >
-                  <span className="sr-only">Next Page</span>
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    className="size-3"
-                    viewBox="0 0 20 20"
-                    fill="currentColor"
+                <li>
+                  <a
+                    href="#"
+                    className="inline-flex size-8 items-center justify-center rounded border border-gray-100 bg-white text-gray-900 rtl:rotate-180 dark:border-gray-800 dark:bg-gray-900 dark:text-white"
+                    onClick={() => paginate(currentPage + 1)}
                   >
-                    <path
-                      fillRule="evenodd"
-                      d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
-                      clipRule="evenodd"
-                    />
-                  </svg>
-                </a>
-              </li>
-            </ol>
-          </div>
+                    <span className="sr-only">Next Page</span>
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      className="size-3"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </a>
+                </li>
+              </ol>
+            </div>
+          )}
         </div>
       </div>
     </>

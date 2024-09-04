@@ -4,8 +4,9 @@ import { Input } from "../components/input";
 import { Modal } from "../components/modal";
 import { IPerson } from "../interface/IPerson";
 import { applyMask } from "../lib/mask";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { validateCPF } from "../lib/validateCPF";
+import { useAlert } from "../alert/AlertContext";
 
 export function CreatePersonModal({
   closeModalCreate,
@@ -13,6 +14,8 @@ export function CreatePersonModal({
   closeModalCreate: () => void;
 }) {
   const [isLoading, setIsLoading] = useState(false);
+  const { addAlert } = useAlert();
+  const [alertShownForZip, setAlertShownForZip] = useState<string | null>(null);
   const [person, setPerson] = useState<IPerson>({
     cpf: "",
     name: "",
@@ -28,21 +31,33 @@ export function CreatePersonModal({
 
   const handleCreatePerson = async (person: IPerson) => {
     setIsLoading(true);
-    if (!person.cpf || !person.name || !person.zipCode || !person.address) {
-      alert("Preencha todos os campos obrigatórios");
+    if (
+      !person.cpf ||
+      !person.name ||
+      !person.zipCode ||
+      !person.address ||
+      !person.number ||
+      !person.neighborhood ||
+      !person.city ||
+      !person.state
+    ) {
+      addAlert("Preencha todos os campos obrigatórios", "error");
       setIsLoading(false);
       return;
     }
     if (!validateCPF(person.cpf)) {
-      alert("CPF inválido");
+      addAlert("CPF inválido", "warning");
       setIsLoading(false);
       return;
     }
     try {
       await createPerson(person);
-      window.location.reload();
+      addAlert("Pessoa criada com sucesso", "success");
+      closeModalCreate();
     } catch (error) {
-      alert(error);
+      addAlert(`${error}`, "error");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -121,14 +136,20 @@ export function CreatePersonModal({
     },
   ];
 
-  useEffect(() => {
-    const handleFetchAddress = async (zipCode: string) => {
+  const handleFetchAddress = useCallback(
+    async (zipCode: string) => {
       try {
         const response = await fetch(
           `https://viacep.com.br/ws/${zipCode}/json/`
         );
         const data = await response.json();
-        console.log(data);
+        if (data.erro) {
+          if (alertShownForZip !== zipCode) {
+            addAlert("CEP não encontrado", "warning");
+            setAlertShownForZip(zipCode);
+          }
+          return;
+        }
         setPerson((prevPerson) => ({
           ...prevPerson,
           address: data.logradouro,
@@ -136,18 +157,19 @@ export function CreatePersonModal({
           city: data.localidade,
           state: data.uf,
         }));
-        if (data.erro) {
-          alert("CEP não encontrado");
-        }
-      } catch (error) {
-        console.error("Um erro inesperado ao trazer os dados", error);
+        setAlertShownForZip(null);
+      } catch {
+        addAlert("Um erro inesperado ao trazer os dados", "error");
       }
-    };
+    },
+    [addAlert, alertShownForZip]
+  );
 
+  useEffect(() => {
     if (person.zipCode.length === 9) {
       handleFetchAddress(person.zipCode);
     }
-  }, [person.zipCode, setPerson]);
+  }, [person.zipCode, handleFetchAddress]);
 
   return (
     <>
