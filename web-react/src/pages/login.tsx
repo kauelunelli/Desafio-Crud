@@ -2,10 +2,24 @@ import { Input } from "../components/input";
 import { login } from "../services";
 import { Lock, User } from "lucide-react";
 import { useState } from "react";
+import { useAlert } from "../alert/AlertContext";
 
 export function LoginPage() {
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
+  const { addAlert } = useAlert();
+
+  const handleLogin = async (user: string, password: string) => {
+    if (!user || !password) {
+      addAlert("Preencha todos os campos", "error");
+      return;
+    }
+    try {
+      await login(user, password);
+    } catch (error) {
+      addAlert(`Erro ao logar usuário ${error}`, "error");
+    }
+  };
 
   const inputs = [
     {
@@ -76,7 +90,7 @@ export function LoginPage() {
 
               <div className="col-span-6 mt-6 sm:flex sm:items-center sm:gap-4">
                 <button
-                  onClick={() => login(user, password)}
+                  onClick={() => handleLogin(user, password)}
                   className="inline-block shrink-0 w-full rounded-md border border-blue-600 bg-blue-600 px-12 py-4 text-sm font-medium text-white transition hover:bg-transparent hover:text-blue-600 focus:outline-none focus:ring active:text-blue-500 dark:hover:bg-blue-700 dark:hover:text-white"
                 >
                   Acessar conta
