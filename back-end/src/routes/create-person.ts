@@ -33,7 +33,7 @@ export async function createPerson(app: FastifyInstance) {
       const userAlreadyExists = await prisma.person.findFirst({ where: { cpf } });
 
       if (userAlreadyExists) {
-        throw new ClientError("User already exists");
+        throw new ClientError("Usuário já cadastrado");
       }
 
       validateCpf(cpf);
