@@ -38,7 +38,7 @@ export async function updatedPerson(app: FastifyInstance) {
       const person = await prisma.person.findUnique({ where: { id } });
 
       if (!person) {
-        throw new ClientError("Person not found");
+        throw new ClientError("Pessoa não encontrada");
       }
 
       const existingPerson = await prisma.person.findFirst({
@@ -51,7 +51,7 @@ export async function updatedPerson(app: FastifyInstance) {
       });
 
       if (existingPerson) {
-        throw new ClientError("CPF is already in use");
+        throw new ClientError("CPF já está cadastrado");
       }
 
       const updatedPerson = await prisma.person.update({
