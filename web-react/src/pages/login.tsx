@@ -1,5 +1,5 @@
 import { Input } from "../components/input";
-import { login } from "../services/UserService";
+import { login } from "../services";
 import { Lock, User } from "lucide-react";
 import { useState } from "react";
 
