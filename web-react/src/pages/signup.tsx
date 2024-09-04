@@ -1,22 +1,32 @@
 import { useState } from "react";
 import { Input } from "../components/input";
 import { Lock, Mail, User } from "lucide-react";
-import { signup } from "../services/UserService";
+import { signup } from "../services";
 import { Button } from "../components/button";
+import { useAlert } from "../alert/AlertContext";
 
 export function SignupPage() {
   const [user, setUser] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const { addAlert } = useAlert();
 
-  const handleSignup = async () => {
+  async function handleSignup() {
     setIsLoading(true);
     if (!user || !email || !password) {
-      alert("Preencha todos os campos");
+      console.log("Preencha todos os campos");
+      addAlert("Preencha todos os campos", "error");
+      setIsLoading(false);
+      return;
     }
-    await signup(user, email, password);
-  };
+    try {
+      await signup(user, email, password);
+    } catch {
+      addAlert(`Erro ao criar usuário ${user}`, "error");
+    }
+    setIsLoading(false);
+  }
 
   const inputs = [
     {
